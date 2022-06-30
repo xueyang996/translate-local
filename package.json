@@ -1,6 +1,6 @@
 {
   "name": "translate-local",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "本地使用翻译工具",
   "main": "./src/index.js",
   "scripts": {
@@ -17,7 +17,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "node-fetch": "^2.0.0",
     "pb": "^0.4.0",
     "tiny-invariant": "^1.2.0",
