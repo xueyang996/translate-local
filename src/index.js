@@ -24,6 +24,11 @@ module.exports = async () => {
   const file = args.file || "test";
   const port = args.file || 8080;
   const mdFile = path.join(__dirname, `../docs/${file}.md`);
+  const folder = path.join(__dirname, `../docs`);
+  const flag = fs.existsSync(folder);
+  if (!flag) {
+    fs.mkdirSync(folder);
+  }
   fs.writeFileSync(mdFile, trimedMarkdown, "utf-8");
 
   translate(mdFile, port);
