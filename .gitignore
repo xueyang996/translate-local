@@ -1,3 +1,6 @@
 node_modules
 # misc
 .DS_Store
+
+src/translate.cache.json
+docs/*
