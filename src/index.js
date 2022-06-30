@@ -31,5 +31,8 @@ module.exports = async () => {
   }
   fs.writeFileSync(mdFile, trimedMarkdown, "utf-8");
 
-  translate(mdFile, port);
+  translate({
+    ...args,
+    file: mdFile,
+  });
 };
