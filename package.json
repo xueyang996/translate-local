@@ -1,6 +1,6 @@
 {
   "name": "translate-local",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "本地使用翻译工具",
   "main": "./src/index.js",
   "scripts": {

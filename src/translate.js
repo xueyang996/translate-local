@@ -31,7 +31,10 @@ const translate = async (opts) => {
   invariant(text.length < 5000, `Too long... ${text.length}`);
   if (cache.has(text)) {
     // info(`Cache hit.`);
-    return cache.get(text);
+    return {
+      data: cache.get(text),
+      cache: true,
+    };
   }
   const API_URL = `http://localhost:${port}/translate`;
   const res = await fetch(API_URL, {
@@ -47,10 +50,10 @@ const translate = async (opts) => {
   const { data } = json;
   invariant(data, `data is null, ${JSON.stringify(json)}`);
   saveCache(text, data);
-  return data;
+  return { data, cache: false };
 };
 
-module.exports = async (file, port) => {
+module.exports = async ({ file, port = 8080, sourceLang, targetLang }) => {
   // info(args);
   // const file = args.file;
   const absFile = path.isAbsolute(file) ? file : path.join(cwd, file);
@@ -61,106 +64,106 @@ module.exports = async (file, port) => {
   invariant(fs.existsSync(absFile), `File not found: ${absFile}`);
   const text = fs.readFileSync(absFile, "utf-8").trim();
   // info(`text length: ${text.length}`);
-  invariant(text.length <= 4000, `Too long...`);
+  // invariant(text.length <= 4000, `Too long...`);
 
-  // translate
-  const translatedText = await translate({
-    text,
-    sourceLang: args.sourceLang,
-    targetLang: args.targetLang,
-    port,
-  });
-  // merge
-  const textArr = text.split("\n\n");
-  const translatedTextArr = translatedText.split("\n\n");
-  const mergedArr = textArr.map((text, i) => {
-    // don't translate code block
-    if (text.startsWith("```")) {
-      return text;
-    } else {
-      return `${text}\n\n${translatedTextArr[i]}`;
-    }
-  });
+  // // translate
+  // const translatedText = await translate({
+  //   text,
+  //   sourceLang,
+  //   targetLang,
+  //   port,
+  // });
+  // // merge
+  // const textArr = text.split("\n\n");
+  // const translatedTextArr = translatedText.split("\n\n");
+  // const mergedArr = textArr.map((text, i) => {
+  //   // don't translate code block
+  //   if (text.startsWith("```")) {
+  //     return text;
+  //   } else {
+  //     return `${text}\n\n${translatedTextArr[i]}`;
+  //   }
+  // });
 
   // read file
   // invariant(fs.existsSync(absFile), `File not found: ${absFile}`);
   // const text = fs.readFileSync(absFile, "utf-8").trim();
   // // info(`text length: ${text.length}`);
-  // const lines = text.split(SEPARATOR);
+  const lines = text.split(SEPARATOR);
 
   // // split lines to blocks
-  // const blocks = [];
-  // let currBlock = [];
-  // let currCharCount = 0;
-  // for (const line of lines) {
-  //   let type;
-  //   if (line.startsWith("```")) {
-  //     type = "CODE_BLOCK";
-  //   } else if (/^!\[(.+)?]\(.+?\)$/.test(line)) {
-  //     type = "IMG";
-  //   }
-  //   lineMap.set(line, { type });
-  //   if (type !== "TEXT") continue;
-  //   const charCount = line.length;
-  //   if (currCharCount + charCount > CHAR_COUNT_LIMIT) {
-  //     blocks.push(currBlock);
-  //     currBlock = [];
-  //     lineMap;
-  //     currBlock.push(line);
-  //     currCharCount = charCount;
-  //   } else {
-  //     currBlock.push(line);
-  //     currCharCount += charCount;
-  //   }
-  // }
-  // if (currBlock.length > 0) {
-  //   blocks.push(currBlock);
-  // }
-  // // info(`block length: ${blocks.length}`);
+  const blocks = [];
+  let currBlock = [];
+  let currCharCount = 0;
+  for (const line of lines) {
+    let type = "TEXT";
+    if (line.startsWith("```")) {
+      type = "CODE_BLOCK";
+    } else if (/^!\[(.+)?]\(.+?\)$/.test(line)) {
+      type = "IMG";
+    }
+    lineMap.set(line, { type });
+    if (type !== "TEXT") continue;
+    const charCount = line.length;
+    if (currCharCount + charCount > CHAR_COUNT_LIMIT) {
+      blocks.push(currBlock);
+      currBlock = [];
+      currBlock.push(line);
+      currCharCount = charCount;
+    } else {
+      currBlock.push(line);
+      currCharCount += charCount;
+    }
+  }
+  if (currBlock.length > 0) {
+    blocks.push(currBlock);
+  }
+  // info(`block length: ${blocks.length}`);
+  // translate
+  const blockLength = blocks.length;
+  for (const [index, block] of blocks.entries()) {
+    const text = block.join(SEPARATOR);
+    // info(`[${index + 1}/${blockLength}] Translating block...`);
+    const { data: translatedText, cache } = await translate({
+      text,
+      sourceLang: args.sourceLang,
+      targetLang: args.targetLang,
+      port,
+    });
+    const translatedTextArr = translatedText.split(SEPARATOR);
+    invariant(
+      block.length === translatedTextArr.length,
+      `translated length not match`
+    );
+    for (let i = 0; i < block.length; i++) {
+      const line = block[i];
+      const translatedLine = translatedTextArr[i];
+      invariant(lineMap.has(line), `line not found in map: ${line}`);
+      lineMap.get(line).text = translatedLine;
+    }
+    if (!cache && index < blockLength - 1) {
+      const delayTime = 1000 + Math.floor(Math.random() * 2000);
+      // info(`delay ${delayTime}ms...`);
+      await delay(delayTime);
+    }
+  }
 
-  // // translate
-  // const blockLength = blocks.length;
-  // for (const [index, block] of blocks.entries()) {
-  //   const text = block.join(SEPARATOR);
-  //   // info(`[${index + 1}/${blockLength}] Translating block...`);
-  //   const { data: translatedText, cache } = await translate({
-  //     text,
-  //     sourceLang: args.sourceLang,
-  //     targetLang: args.targetLang,
-  //   });
-  //   const translatedTextArr = translatedText.split(SEPARATOR);
-  //   invariant(
-  //     block.length === translatedTextArr.length,
-  //     `translated length not match`
-  //   );
-  //   for (let i = 0; i < block.length; i++) {
-  //     const line = block[i];
-  //     const translatedLine = translatedTextArr[i];
-  //     invariant(lineMap.has(line), `line not found in map: ${line}`);
-  //     lineMap.get(line).text = translatedLine;
-  //   }
-  //   if (!cache && index < blockLength - 1) {
-  //     const delayTime = 1000 + Math.floor(Math.random() * 2000);
-  //     // info(`delay ${delayTime}ms...`);
-  //     await delay(delayTime);
-  //   }
-  // }
-
-  // // merge
-  // const mergedArr = [];
-  // for (const [line, { type, text }] of lineMap.entries()) {
-  //   if (type === "TEXT") {
-  //     mergedArr.push(line);
-  //     mergedArr.push(text);
-  //   } else {
-  //     mergedArr.push(line);
-  //   }
-  // }
+  // merge
+  const mergedArr = [];
+  for (const [line, { type, text }] of lineMap.entries()) {
+    if (type === "TEXT") {
+      mergedArr.push(line);
+      mergedArr.push(text);
+    } else {
+      mergedArr.push(line);
+    }
+  }
   // // info(`Merged.`, mergedArr);
 
   // write new file
   const absNewFile = absFile.replace(/\.md/, ".translated.md");
   fs.writeFileSync(absNewFile, mergedArr.join(SEPARATOR), "utf-8");
   // event(`Translated to ${absNewFile}`);
+  // 打开文件
   spawn("open", [absNewFile]);
 };
