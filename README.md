@@ -15,3 +15,4 @@
 3. ✅ 增加更多参数，如源语言、目标语言输入
 4. todo 增加 prettier eslint 校验等
 5. todo 增加 changelog
+6. 研究 node cmj、esm 等的区别
