@@ -13,4 +13,5 @@
 1. ✅ 翻译内容截取
 2. ✅ 调用时间增加延时
 3. ✅ 增加更多参数，如源语言、目标语言输入
-4. todo 增加 ts 校验等
+4. todo 增加 prettier eslint 校验等
+5. todo 增加 changelog
