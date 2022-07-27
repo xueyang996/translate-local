@@ -16,3 +16,4 @@
 4. todo 增加 prettier eslint 校验等
 5. todo 增加 changelog
 6. 研究 node cmj、esm 等的区别
+7. todo 增加 ts 校验等；tsx、zx 插件使用接入？
