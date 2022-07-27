@@ -3,6 +3,7 @@ var pb = require("pb");
 const path = require("path");
 const fs = require("fs");
 const args = require("minimist")(process.argv.slice(2));
+var colors = require("colors");
 const translate = require("./translate.js");
 
 module.exports = async () => {
@@ -30,6 +31,8 @@ module.exports = async () => {
     fs.mkdirSync(folder);
   }
   fs.writeFileSync(mdFile, trimedMarkdown, "utf-8");
+
+  console.log(colors.green("开始翻译"));
 
   translate({
     ...args,

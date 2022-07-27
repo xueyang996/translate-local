@@ -5,6 +5,7 @@ var fetch = require("node-fetch");
 // import { event, info } from "./logger";
 const path = require("path");
 const fs = require("fs");
+const colors = require("colors");
 const { spawn } = require("child_process");
 const args = require("minimist")(process.argv.slice(2));
 var info = console.log;
@@ -49,7 +50,9 @@ const translate = async (opts) => {
   const json = await res.json();
   const { data } = json;
   invariant(data, `data is null, ${JSON.stringify(json)}`);
-  saveCache(text, data);
+  if (res.status === 200) {
+    saveCache(text, data);
+  }
   return { data, cache: false };
 };
 
@@ -163,6 +166,8 @@ module.exports = async ({ file, port = 8080, sourceLang, targetLang }) => {
   // write new file
   const absNewFile = absFile.replace(/\.md/, ".translated.md");
   fs.writeFileSync(absNewFile, mergedArr.join(SEPARATOR), "utf-8");
+  console.log(colors.green("翻译完成"));
+  console.log(colors.green("文件地址" + absNewFile));
   // event(`Translated to ${absNewFile}`);
   // 打开文件
   spawn("open", [absNewFile]);
